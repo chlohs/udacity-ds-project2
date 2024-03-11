@@ -103,7 +103,7 @@ def save_data(df: pd.DataFrame, database_filename: str) -> None:
     table_name = os.path.basename(database_filename).replace(".db", "") + "_table"
 
     # Save the DataFrame to the SQLite database with the specified table name
-    df.to_sql(table_name, engine, index=False)
+    df.to_sql(table_name, engine, index=False, if_exists='replace')
 
 
 def main():

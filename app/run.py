@@ -27,10 +27,10 @@ def tokenize(text):
 
 # load data
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
-df = pd.read_sql_table('classifier.pkl', engine)
+df = pd.read_sql_table('DisasterResponse_table', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,7 +42,9 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    emergency_type_columns = df.columns[4:].tolist()
+        
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -63,7 +65,27 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        {
+        'data': [
+            {
+                'type': 'bar',
+                'name': emergency_type,
+                'x': df['genre'].unique().tolist(),  # Replace 'genre' with the actual genre column name
+                'y': df.groupby('genre')[emergency_type].sum().tolist()
+            } for emergency_type in emergency_type_columns
+        ],
+        'layout': {
+            'title': 'Category by Origin',
+            'yaxis': {
+                'title': "Count"
+            },
+            'xaxis': {
+                'title': "Origin"
+            },
+            'barmode': 'group'
         }
+    }
     ]
     
     # encode plotly graphs in JSON

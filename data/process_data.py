@@ -1,6 +1,6 @@
 import sys
 import pandas as pd
-import numpy as np
+import os
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath: str, categories_filepath: str) -> pd.DataFrame:
@@ -76,7 +76,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Drop rows and columns with no additional value
     df = df.drop('child_alone', axis=1)
-    df = df[df['specific_column'] != 2]
+    df = df[df['related'] != 2]
 
     return df
 
@@ -100,7 +100,7 @@ def save_data(df: pd.DataFrame, database_filename: str) -> None:
     engine = create_engine('sqlite:///{}'.format(database_filename))
 
     # Generate a table name by removing the ".db" extension from the database filename
-    table_name = database_filename.replace(".db","") + "_table"
+    table_name = os.path.basename(database_filename).replace(".db", "") + "_table"
 
     # Save the DataFrame to the SQLite database with the specified table name
     df.to_sql(table_name, engine, index=False)

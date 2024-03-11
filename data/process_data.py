@@ -3,49 +3,107 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 
-def load_data(messages_filepath, categories_filepath):
+def load_data(messages_filepath: str, categories_filepath: str) -> pd.DataFrame:
+    """
+    Load messages and categories datasets and merge them on 'id' column.
+
+    Parameters
+    ----------
+    messages_filepath : str
+        Filepath of the messages dataset.
+    categories_filepath : str
+        Filepath of the categories dataset.
+
+    Returns
+    -------
+    pd.DataFrame
+        Merged dataframe of messages and categories datasets.
+    """
     # load messages dataset
     messages = pd.read_csv(messages_filepath)  
     categories = pd.read_csv(categories_filepath)
-    
+
+    # merge messages and categories datasets on 'id' column
     df = pd.merge(messages, categories, on='id')
+
     return df
-    pass
 
 
-def clean_data(df):
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Clean the data by splitting the 'categories' column into separate columns,
+    renaming the columns, converting the values to numeric, dropping unnecessary columns,
+    and dropping duplicate rows.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input dataframe containing the 'categories' column.
+
+    Returns
+    -------
+    pd.DataFrame
+        The cleaned dataframe.
+
+    """
+    # Split the 'categories' column into separate columns
     categories = df['categories'].str.split(';', expand=True)
-    # select the first row of the categories dataframe
+
+    # Select the first row of the categories dataframe
     row = categories.iloc[0]
 
-    # use this row to extract a list of new column names for categories.
-    # one way is to apply a lambda function that takes everything 
-    # up to the second to last character of each string with slicing
+    # Extract a list of new column names for categories
     category_colnames = row.apply(lambda x: x.split('-')[0])
-    # rename the columns of `categories`
+
+    # Rename the columns of 'categories'
     categories.columns = category_colnames
+
+    # Convert the values in each column to the last character of the string
     for column in categories:
-        # set each value to be the last character of the string
         categories[column] = categories[column].astype(str).str[-1]
 
-        # convert column from string to numeric
+        # Convert column from string to numeric
         categories[column] = pd.to_numeric(categories[column])
-    # drop the original categories column from `df`
+
+    # Drop the original 'categories' column from the dataframe
     df.drop('categories', axis=1, inplace=True)
-    # concatenate the original dataframe with the new `categories` dataframe
+
+    # Concatenate the original dataframe with the new 'categories' dataframe
     df = pd.concat([df, categories], axis=1)
+
+    # Drop duplicate rows
     df.drop_duplicates(inplace=True)
-    df = df.drop('child_alone', axis = 1)
-    
+
+    # Drop rows and columns with no additional value
+    df = df.drop('child_alone', axis=1)
+    df = df[df['specific_column'] != 2]
+
     return df
-    pass
 
 
-def save_data(df, database_filename):
+def save_data(df: pd.DataFrame, database_filename: str) -> None:
+    """
+    Save a pandas DataFrame to a SQLite database.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to be saved.
+    database_filename : str
+        The filename of the SQLite database.
+
+    Returns
+    -------
+    None
+    """
+    # Create a SQLAlchemy engine with the specified database filename
     engine = create_engine('sqlite:///{}'.format(database_filename))
+
+    # Generate a table name by removing the ".db" extension from the database filename
     table_name = database_filename.replace(".db","") + "_table"
+
+    # Save the DataFrame to the SQLite database with the specified table name
     df.to_sql(table_name, engine, index=False)
-    pass  
 
 
 def main():
